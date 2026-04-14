@@ -1,7 +1,7 @@
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 const app = express();
 
@@ -28,17 +28,11 @@ db.getConnection((err, connection) => {
   }
 });
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-function enviarEmail(destino, nomeAmigo, nomePessoa, nomeGrupo) {
-  return transporter.sendMail({
-    from: process.env.EMAIL_USER,
+async function enviarEmail(destino, nomeAmigo, nomePessoa, nomeGrupo) {
+  return resend.emails.send({
+    from: "onboarding@resend.dev",
     to: destino,
     subject: `Seu amigo secreto - ${nomeGrupo}`,
     text: `Olá ${nomePessoa}! Seu amigo secreto é: ${nomeAmigo}`
@@ -182,22 +176,24 @@ app.post("/sortear/:grupoId", (req, res) => {
             mensagem: "Sorteio realizado com sucesso!"
           });
 
-          Promise.all(
-            resultado.map((par) =>
-              enviarEmail(
-                par.remetente.email,
-                par.destinatario.nome,
-                par.remetente.nome,
-                `Grupo ${grupoId}`
+          setTimeout(() => {
+            Promise.all(
+              resultado.map((par) =>
+                enviarEmail(
+                  par.remetente.email,
+                  par.destinatario.nome,
+                  par.remetente.nome,
+                  `Grupo ${grupoId}`
+                )
               )
             )
-          )
-            .then(() => {
-              console.log("E-mails enviados!");
-            })
-            .catch((errEmail) => {
-              console.log("Erro ao enviar e-mails:", errEmail);
-            });
+              .then(() => {
+                console.log("E-mails enviados!");
+              })
+              .catch((errEmail) => {
+                console.log("Erro ao enviar e-mails:", errEmail);
+              });
+          }, 100);
         }
       );
     }
