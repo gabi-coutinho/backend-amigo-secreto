@@ -178,33 +178,25 @@ app.post("/sortear/:grupoId", (req, res) => {
             });
           }
 
-         
-res.json({
-  mensagem: "Sorteio realizado com sucesso!"
-});
+          res.json({
+            mensagem: "Sorteio realizado com sucesso!"
+          });
 
-
-Promise.all(
-  resultado.map((par) =>
-    enviarEmail(
-      par.remetente.email,
-      par.destinatario.nome,
-      par.remetente.nome,
-      `Grupo ${grupoId}`
-    )
-  )
-)
-  .then(() => {
-    console.log("E-mails enviados!");
-  })
-  .catch((err) => {
-    console.log("Erro ao enviar e-mails:", err);
-  });
+          Promise.all(
+            resultado.map((par) =>
+              enviarEmail(
+                par.remetente.email,
+                par.destinatario.nome,
+                par.remetente.nome,
+                `Grupo ${grupoId}`
+              )
+            )
+          )
+            .then(() => {
+              console.log("E-mails enviados!");
+            })
             .catch((errEmail) => {
               console.log("Erro ao enviar e-mails:", errEmail);
-              return res.status(500).json({
-                mensagem: "Sorteio salvo, mas houve erro ao enviar e-mails."
-              });
             });
         }
       );
